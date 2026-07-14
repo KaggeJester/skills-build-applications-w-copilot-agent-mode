@@ -4,37 +4,56 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mongoose_1 = __importDefault(require("mongoose"));
+const database_1 = require("./config/database");
+const users_1 = __importDefault(require("./routes/users"));
+const teams_1 = __importDefault(require("./routes/teams"));
+const activities_1 = __importDefault(require("./routes/activities"));
+const leaderboard_1 = __importDefault(require("./routes/leaderboard"));
+const workouts_1 = __importDefault(require("./routes/workouts"));
 const app = (0, express_1.default)();
 const PORT = 8000;
-const MONGODB_URI = 'mongodb://localhost:27017/octofit-tracker';
 // Middleware
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-// MongoDB Connection
-const connectDatabase = async () => {
-    try {
-        await mongoose_1.default.connect(MONGODB_URI);
-        console.log('MongoDB connected successfully');
-    }
-    catch (error) {
-        console.error('MongoDB connection failed:', error);
-        process.exit(1);
-    }
-};
-// Routes
+// Codespaces-aware API URL support
+const codespaceName = process.env.CODESPACE_NAME;
+const baseUrl = codespaceName
+    ? `https://${codespaceName}-8000.app.github.dev`
+    : 'http://localhost:8000';
+// Health check endpoint
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'OK', message: 'OctoFit Tracker API is running' });
+    res.json({
+        status: 'OK',
+        message: 'OctoFit Tracker API is running',
+        apiUrl: baseUrl,
+    });
+});
+// API Routes
+app.use('/api/users', users_1.default);
+app.use('/api/teams', teams_1.default);
+app.use('/api/activities', activities_1.default);
+app.use('/api/leaderboard', leaderboard_1.default);
+app.use('/api/workouts', workouts_1.default);
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(err.status || 500).json({
+        message: err.message || 'Internal server error',
+    });
 });
 // Start Server
 const startServer = async () => {
-    await connectDatabase();
-    app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-    });
+    try {
+        await (0, database_1.connectDatabase)();
+        app.listen(PORT, () => {
+            console.log(`OctoFit Tracker API running on http://localhost:${PORT}`);
+            console.log(`API Base URL: ${baseUrl}`);
+        });
+    }
+    catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
 };
-startServer().catch((error) => {
-    console.error('Failed to start server:', error);
-    process.exit(1);
-});
+startServer();
 exports.default = app;

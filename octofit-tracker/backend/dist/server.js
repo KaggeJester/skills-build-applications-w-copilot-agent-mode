@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.baseUrl = exports.CODESPACE_NAME = exports.startServer = exports.app = void 0;
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const database_1 = require("./config/database");
 const users_1 = __importDefault(require("./routes/users"));
 const teams_1 = __importDefault(require("./routes/teams"));
@@ -17,6 +18,37 @@ const PORT = 8000;
 // Middleware
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+// CORS configuration for Codespaces and localhost
+const corsOptions = {
+    origin: (origin, callback) => {
+        const CODESPACE_NAME = process.env.CODESPACE_NAME;
+        const allowedOrigins = [
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'http://localhost:3000',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:5174',
+            'http://127.0.0.1:3000',
+        ];
+        // Add Codespaces frontend URL
+        if (CODESPACE_NAME) {
+            allowedOrigins.push(`https://${CODESPACE_NAME}-5173.app.github.dev`);
+            allowedOrigins.push(`https://${CODESPACE_NAME}-5174.app.github.dev`);
+            allowedOrigins.push(`https://${CODESPACE_NAME}-3000.app.github.dev`);
+        }
+        // Allow requests without origin (like curl or mobile apps)
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use((0, cors_1.default)(corsOptions));
 // Codespaces-aware API URL support
 const CODESPACE_NAME = process.env.CODESPACE_NAME;
 exports.CODESPACE_NAME = CODESPACE_NAME;

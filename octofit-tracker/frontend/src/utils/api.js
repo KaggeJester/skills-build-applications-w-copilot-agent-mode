@@ -3,19 +3,25 @@
  * 
  * This utility handles Codespaces and localhost API endpoints.
  * 
- * Environment Variable: VITE_CODESPACE_NAME
- * - In Codespaces: Automatically set by GitHub
- * - Locally: Must be defined in .env.local (optional)
- * 
- * Example .env.local:
- * VITE_CODESPACE_NAME=your-codespace-name
- * 
- * Fallback: If VITE_CODESPACE_NAME is not set, uses http://localhost:8000
+ * Detects environment dynamically:
+ * - In Codespaces: Extracts codespace name from browser URL (*.app.github.dev)
+ * - Locally: Uses http://localhost:8000
  */
 
 const getApiBaseUrl = () => {
-  const codespaceName = import.meta.env.VITE_CODESPACE_NAME;
+  // Check if running in Codespaces by looking at the current domain
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   
+  // Match Codespaces domain pattern: {codespace-name}-{port}.app.github.dev
+  const codespacesMatch = hostname.match(/^(.+?)-\d+\.app\.github\.dev$/);
+  
+  if (codespacesMatch) {
+    const codespaceName = codespacesMatch[1];
+    return `https://${codespaceName}-8000.app.github.dev/api`;
+  }
+  
+  // Also check environment variable as fallback
+  const codespaceName = import.meta.env.VITE_CODESPACE_NAME;
   if (codespaceName && codespaceName !== 'undefined') {
     return `https://${codespaceName}-8000.app.github.dev/api`;
   }

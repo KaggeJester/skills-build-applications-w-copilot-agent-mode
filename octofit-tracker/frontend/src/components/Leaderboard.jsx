@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { fetchFromApi } from '../utils/api';
 
+// API endpoint: https://{codespace-name}-8000.app.github.dev/api/leaderboard
+
 export const Leaderboard = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);

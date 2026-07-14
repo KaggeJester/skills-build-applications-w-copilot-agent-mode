@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { fetchFromApi } from '../utils/api';
 
+// API endpoint: https://{codespace-name}-8000.app.github.dev/api/activities
+
 export const Activities = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);

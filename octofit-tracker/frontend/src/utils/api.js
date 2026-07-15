@@ -9,6 +9,11 @@
  */
 
 const getApiBaseUrl = () => {
+  // In development, use Vite proxy to avoid CORS and Codespaces hostname mismatches.
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+
   // Check if running in Codespaces by looking at the current domain
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
   

@@ -27,15 +27,28 @@ const corsOptions = {
       'http://127.0.0.1:3000',
     ];
 
-    // Add Codespaces frontend URL
+    // Add explicit Codespaces frontend URLs when env is available
     if (CODESPACE_NAME) {
       allowedOrigins.push(`https://${CODESPACE_NAME}-5173.app.github.dev`);
       allowedOrigins.push(`https://${CODESPACE_NAME}-5174.app.github.dev`);
       allowedOrigins.push(`https://${CODESPACE_NAME}-3000.app.github.dev`);
     }
 
+    const isCodespacesFrontendOrigin = (() => {
+      if (!origin) {
+        return false;
+      }
+
+      try {
+        const { protocol, hostname } = new URL(origin);
+        return protocol === 'https:' && /^[a-z0-9-]+-(5173|5174|3000)\.app\.github\.dev$/i.test(hostname);
+      } catch {
+        return false;
+      }
+    })();
+
     // Allow requests without origin (like curl or mobile apps)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || isCodespacesFrontendOrigin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
